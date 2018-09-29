@@ -1,32 +1,5 @@
-// var apiKey = "XJbIRItZXyqpIrv53RgoAWQDHXFmlZBA";
-
-// var numOfImagesPerRequest = 20;
-// for (var i = 0; i < 1; i++) {
-//   var test = `http://api.giphy.com/v1/gifs/search?q=ryan+gosling&api_key=${apiKey}&limit=${numOfImagesPerRequest}&offset=${numOfImagesPerRequest *
-//     i}`;
-//   var hints =
-//     "https://cors.io/?" +
-//     `https://giphy.com/api/v1/channels-search/search/channel_v2?q=hello`;
-//   var hints2 =
-//     "https://cors.io/?" + `https://giphy.com/ajax/tags/search/?q=hello`;
-
-//   console.log(test);
-//   console.log(hints);
-
-//   fetch(test)
-//     .then(r => console.log(r))
-//     .catch(e => console.log(e));
-
-//   fetch(hints)
-//     .then(r => r.json())
-//     .then(r => console.log(r))
-//     .catch(e => console.log(e));
-// }
-
 // class SearchField
-function SearchField() {
-  this.createSearchFieldView();
-}
+function SearchField() {}
 
 SearchField.prototype.createSearchFieldView = function() {
   var formTag = document.createElement("form");
@@ -34,7 +7,7 @@ SearchField.prototype.createSearchFieldView = function() {
   var inputTag = document.createElement("input");
   inputTag.setAttribute("type", "text");
   formTag.appendChild(inputTag);
-  this.searchFieldView = formTag;
+  this.searchField = formTag;
 };
 
 // check if text in form is full selected
@@ -49,17 +22,36 @@ SearchField.prototype.isTextSelected = function(input) {
   }
 };
 
-SearchField.prototype.addNeededEvents = function(getHints, getResults) {
+SearchField.prototype.addNeededEvents = function(
+  getHints,
+  getResults,
+  maxNumHintsRows,
+  maxNumResultsPerRequest
+) {
   /**
    * Adds needed events to the searchFieldView
    * @param {function} getHints returns hints by entered letters
    * @param {function} getResults returns results by value of input(makes request for giphs)
-   *
+   * @param {integer} maxNumResultsPerRequest Number of results per request
    */
   var result = "";
   var that = this; // change to arrow function
 
-  this.searchFieldView.addEventListener("keydown", function(e) {
+  this.searchField.firstChild.addEventListener("focus", function() {
+    var dropDownMenu = document.getElementById("dropDownMenu");
+    if (dropDownMenu) {
+      dropDownMenu.style.display = "block";
+    }
+  });
+
+  this.searchField.firstChild.addEventListener("blur", function() {
+    var dropDownMenu = document.getElementById("dropDownMenu");
+    if (dropDownMenu) {
+      dropDownMenu.style.display = "none";
+    }
+  });
+
+  this.searchField.addEventListener("keydown", function(e) {
     if (
       (e.keyCode >= 48 && e.keyCode <= 57) ||
       (e.keyCode >= 65 && e.keyCode <= 90) ||
@@ -67,13 +59,23 @@ SearchField.prototype.addNeededEvents = function(getHints, getResults) {
     ) {
       result += e.key;
       if (getHints) {
-        getHints(result.trim());
+        var hintsPromise = getHints(result.trim());
+
+        hintsPromise.then(hints => {
+          console.log(hints);
+          if (hints) {
+            var dropDownMenu = new DropDownMenu(hints["result"]["objects"], 3);
+            dropDownMenu.createDropDownView();
+            that.getSearchField().appendChild(dropDownMenu.getDropDownMenu());
+            that.addChildElement(dropDownMenu.getDropDownMenu());
+          }
+        });
       }
     } else if (e.keyCode === 13 && result !== "") {
       // 13 == enter
       e.preventDefault();
       if (getResults) {
-        getResults(result.trim());
+        getResults(result.trim(), maxNumResultsPerRequest);
       }
     } else if (e.keyCode === 8) {
       // 8 == backspace
@@ -82,7 +84,24 @@ SearchField.prototype.addNeededEvents = function(getHints, getResults) {
       } else {
         result = result.slice(0, -1);
         if (result) {
-          getHints(result.trim());
+          if (getHints) {
+            var hintsPromise = getHints(result.trim());
+
+            hintsPromise.then(hints => {
+              if (hints) {
+                var dropDownMenu = new DropDownMenu(
+                  hints["result"]["objects"],
+                  3
+                );
+                dropDownMenu.createDropDownView();
+                console.log(dropDownMenu.getDropDownMenu());
+                that
+                  .getSearchField()
+                  .appendChild(dropDownMenu.getDropDownMenu());
+                that.addChildElement(dropDownMenu.getDropDownMenu());
+              }
+            });
+          }
         }
       }
     } else {
@@ -91,9 +110,15 @@ SearchField.prototype.addNeededEvents = function(getHints, getResults) {
   });
 };
 
-SearchField.prototype.getSearchFieldView = function() {
-  return this.searchFieldView;
+SearchField.prototype.getSearchField = function() {
+  return this.searchField;
 };
+
+SearchField.prototype.addChildElement = function(childElement) {
+  this.searchField.removeChild(document.getElementById("dropDownMenu"));
+  this.searchField.appendChild(childElement);
+};
+
 // end search field class
 
 // class DropDown
@@ -110,6 +135,7 @@ function DropDownMenu(data, maxNumOfRows) {
 
 DropDownMenu.prototype.createDropDownView = function() {
   var ul = document.createElement("ul");
+  ul.setAttribute("id", "dropDownMenu");
 
   var numOfRows =
     this.maxNumOfRows > this.data.length ? this.data.length : this.maxNumOfRows;
@@ -149,40 +175,31 @@ DropDownRow.prototype.getDropDownRow = function() {
 };
 // end class DropDownRow
 
-function getHints(maxNumOfRows) {
+function getHints() {
   /**
    *
-   * @param {integer} maxNumOfRows Max number of row to show
+   *
    */
   return function(request) {
     var laying = "https://cors.io/?";
     var hints = encodeURI(
       laying + `https://giphy.com/ajax/tags/search/?q=${request}`
     );
-    fetch(hints)
-      .then(response => response.json())
-      .then(response => {
-        var dropDownMenu = new DropDownMenu(
-          response["result"]["objects"],
-          maxNumOfRows
-        );
-        dropDownMenu.createDropDownView();
-        console.log(dropDownMenu.getDropDownMenu());
-      });
+    return fetch(hints).then(response => response.json());
   };
 }
 
-function getResults(apiKey, resultsPerRequest) {
+function getResults(apiKey) {
   /**
    * Returns results by request
    * @param {string} apiKey Api key of the service
-   * @param {integer} resultsPerRequest Number of results per request
+   *
    *
    * @returns {function} Function to make request
    */
   var batchNumber = 0;
 
-  return function(request) {
+  return function(request, resultsPerRequest) {
     var results = encodeURI(
       `http://api.giphy.com/v1/gifs/search?q=${request}g&api_key=${apiKey}&limit=${resultsPerRequest}&offset=${resultsPerRequest *
         batchNumber}`
@@ -200,10 +217,13 @@ function getResults(apiKey, resultsPerRequest) {
 var apiKey = "XJbIRItZXyqpIrv53RgoAWQDHXFmlZBA";
 
 var searchField = new SearchField();
-document.body.appendChild(searchField.getSearchFieldView());
-searchField.addNeededEvents(getHints(3), getResults(apiKey, 30));
+searchField.createSearchFieldView();
+document.body.appendChild(searchField.getSearchField());
+searchField.addNeededEvents(getHints(), getResults(apiKey, 20));
 
 var dropDownRow = new DropDownRow("hello");
 dropDownRow.createDropDownRowView();
 console.log(dropDownRow.getDropDownRow());
+
+console.log();
 // end class SearchField
