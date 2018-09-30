@@ -405,6 +405,25 @@ function getResults(apiKey) {
   };
 }
 
+function imageClickHandler(e) {
+  console.log(e.srcElement.width, e.srcElement.height, e.srcElement.src, db);
+  var transaction = db.transaction(["images"], "readwrite");
+  var store = transaction.objectStore("images");
+  var image = {
+    width: e.srcElement.width,
+    height: e.srcElement.height,
+    src: e.srcElement.src
+  };
+  var request = store.add(image);
+  request.onsuccess = function(e) {
+    alert("The image was saved to favorites");
+  };
+
+  request.onerror = function(e) {
+    alert("The image is already in favorites");
+  };
+}
+
 var apiKey = "XAz4Bn2YbnvfXDD7QfkP6yg5hhzYEIqv";
 
 var searchField = new SearchField();
@@ -468,16 +487,26 @@ tabs[2].addEventListener("click", function(e) {
   var transaction = db.transaction(["images"], "readonly");
   var store = transaction.objectStore("images");
   var cursor = store.openCursor();
+
+  grids[2].clearGrid();
+
+  var gridGroup = new GridGroup();
+  gridGroup.createGridGroupView();
+
   cursor.onsuccess = function(e) {
     var res = e.target.result;
     if (res) {
       console.log(res.value);
+
       var gridCell = new GridCell(res.value.width, res.value.height);
       gridCell.createGridCellView();
       gridCell.addImage(res.value.src);
-      grids[2].addCell(gridCell.getGridCell());
+
+      gridGroup.addCell(gridCell.getGridCell());
+
       res.continue();
     }
+    grids[2].addGridGroup(gridGroup.getGridGroup());
   };
 
   //var gridCell = new GridCell();
@@ -523,22 +552,4 @@ if ("indexedDB" in window) {
   console.log("I am so sorry!");
 }
 
-function imageClickHandler(e) {
-  console.log(e.srcElement.width, e.srcElement.height, e.srcElement.src, db);
-  var transaction = db.transaction(["images"], "readwrite");
-  var store = transaction.objectStore("images");
-  var image = {
-    width: e.srcElement.width,
-    height: e.srcElement.height,
-    src: e.srcElement.src
-  };
-  var request = store.add(image);
-  request.onsuccess = function(e) {
-    alert("The image was saved to favorites");
-  };
-
-  request.onerror = function(e) {
-    alert("The image is already in favorites");
-  };
-}
 // end indexed db
