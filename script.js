@@ -282,6 +282,7 @@ GridCell.prototype.getGridCell = function() {
 GridCell.prototype.addImage = function(url, eventHandler) {
   var img = document.createElement("img");
   img.setAttribute("src", url);
+  img.setAttribute("title", "Click to save!");
   if (eventHandler) {
     img.addEventListener("click", eventHandler);
   }
@@ -464,26 +465,34 @@ grids[2].hideGrid();
 
 var tabs = document.getElementsByClassName("tab");
 tabs[0].addEventListener("click", function(e) {
-  //e.stopPropagation();
+  tabs[0].classList.add("active");
+  tabs[1].classList.remove("active");
+  tabs[2].classList.remove("active");
+  searchField.letMakeRequest = true;
   grids[0].showGrid();
   grids[1].hideGrid();
   grids[2].hideGrid();
 });
 
 tabs[1].addEventListener("click", function(e) {
-  console.log(e, "stickersTab click");
-  //e.stopPropagation();
+  tabs[0].classList.remove("active");
+  tabs[1].classList.add("active");
+  tabs[2].classList.remove("active");
+  searchField.letMakeRequest = true;
   grids[0].hideGrid();
   grids[1].showGrid();
   grids[2].hideGrid();
 });
 
 tabs[2].addEventListener("click", function(e) {
-  console.log(e, "favorites click");
-  //e.stopPropagation();
+  tabs[0].classList.remove("active");
+  tabs[1].classList.remove("active");
+  tabs[2].classList.add("active");
+  searchField.letMakeRequest = false;
   grids[0].hideGrid();
   grids[1].hideGrid();
   grids[2].showGrid();
+
   var transaction = db.transaction(["images"], "readonly");
   var store = transaction.objectStore("images");
   var cursor = store.openCursor();
@@ -496,8 +505,6 @@ tabs[2].addEventListener("click", function(e) {
   cursor.onsuccess = function(e) {
     var res = e.target.result;
     if (res) {
-      console.log(res.value);
-
       var gridCell = new GridCell(res.value.width, res.value.height);
       gridCell.createGridCellView();
       gridCell.addImage(res.value.src);
@@ -508,8 +515,6 @@ tabs[2].addEventListener("click", function(e) {
     }
     grids[2].addGridGroup(gridGroup.getGridGroup());
   };
-
-  //var gridCell = new GridCell();
 });
 
 window.onscroll = function(e) {
