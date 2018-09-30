@@ -85,7 +85,7 @@ SearchField.prototype.addNeededEvents = function(
         console.log(e);
         if (e.code !== "true") {
           console.log("clearGrid");
-          grid.clearGrid();
+          grids.forEach(grid => grid.clearGrid());
         }
 
         var resultsPromise = getResults(
@@ -94,25 +94,32 @@ SearchField.prototype.addNeededEvents = function(
           !e.code
         );
 
+        console.log(resultsPromise);
+
         resultsPromise
           .then(results => {
+            console.log(results);
+
             if (results) {
-              var gridGroup = new GridGroup();
-              gridGroup.createGridGroupView();
-              for (var i = 0; i < results["data"].length; i++) {
-                var gridCell = new GridCell(
-                  results["data"][i]["images"]["downsized"]["width"],
-                  results["data"][i]["images"]["downsized"]["height"]
-                );
-                gridCell.createGridCellView();
-                gridCell.addImage(
-                  results["data"][i]["images"]["downsized"]["url"]
-                );
-                gridGroup.addCell(gridCell.getGridCell());
-              }
-              grid.addGridGroup(gridGroup.getGridGroup());
-              that.letMakeRequest = true;
+              results.forEach(function(result, index) {
+                var gridGroup = new GridGroup();
+                gridGroup.createGridGroupView();
+                for (var i = 0; i < result["data"].length; i++) {
+                  var gridCell = new GridCell(
+                    result["data"][i]["images"]["downsized"]["width"],
+                    result["data"][i]["images"]["downsized"]["height"]
+                  );
+                  gridCell.createGridCellView();
+                  gridCell.addImage(
+                    result["data"][i]["images"]["downsized"]["url"]
+                  );
+                  gridGroup.addCell(gridCell.getGridCell());
+                }
+                grids[index].addGridGroup(gridGroup.getGridGroup());
+              });
             }
+
+            that.letMakeRequest = true;
           })
           .catch(e => {
             console.log("result promise error");
@@ -124,6 +131,11 @@ SearchField.prototype.addNeededEvents = function(
 
       if (that.isTextSelected(e.target)) {
         result = "";
+        if (document.getElementById("dropDownMenu")) {
+          that
+            .getSearchField()
+            .removeChild(document.getElementById("dropDownMenu"));
+        }
       } else {
         result = result.slice(0, -1);
         if (result) {
@@ -147,11 +159,18 @@ SearchField.prototype.addNeededEvents = function(
               })
               .catch(e => console.log(e));
           }
+        } else {
+          if (document.getElementById("dropDownMenu")) {
+            that
+              .getSearchField()
+              .removeChild(document.getElementById("dropDownMenu"));
+          }
         }
       }
     } else {
       e.preventDefault();
     }
+    console.log(result);
   });
 };
 
@@ -211,8 +230,8 @@ function Tab(label) {
 
 Tab.prototype.createTabView = function() {
   var span = document.createElement("span");
-  span.setAttribute("class", "span");
-  span.innerText = this.lable;
+  span.setAttribute("class", "tab");
+  span.innerText = this.label;
 
   this.tab = span;
 };
@@ -341,24 +360,43 @@ function getResults(apiKey) {
    *
    * @returns {function} Function to make request
    */
-  var batchNumber = 0;
+  var batchNumberGIFs = 0,
+    batchNumberStickers = 0;
 
   return function(request, resultsPerRequest, resetBatchNumber) {
     var laying = "https://cors.io/?";
 
-    var results = encodeURI(
+    var resultsGIFs = encodeURI(
       laying +
         `http://api.giphy.com/v1/gifs/search?q=${request}&api_key=${apiKey}&limit=${resultsPerRequest}&offset=${resultsPerRequest *
-          batchNumber}`
+          batchNumberGIFs}`
     );
-    console.log(results, "url of request");
-    return fetch(results)
-      .then(response => {
-        batchNumber++;
-        if (resetBatchNumber) batchNumber = 0;
-        return response.json();
-      })
-      .catch(e => console.log(e));
+
+    var resultsStickers = encodeURI(
+      laying +
+        `http://api.giphy.com/v1/stickers/search?q=${request}&api_key=${apiKey}&limit=${resultsPerRequest}&offset=${resultsPerRequest *
+          batchNumberStickers}`
+    );
+
+    console.log(resultsStickers, "url of request stickers");
+    console.log(resultsGIFs, "url of request gifs");
+
+    return Promise.all([
+      fetch(resultsGIFs)
+        .then(response => {
+          batchNumberGIFs++;
+          if (resetBatchNumber) batchNumberGIFs = 0;
+          return response.json();
+        })
+        .catch(e => console.log(e)),
+      fetch(resultsStickers)
+        .then(response => {
+          batchNumberStickers++;
+          if (resetBatchNumber) batchNumberStickers = 0;
+          return response.json();
+        })
+        .catch(e => console.log(e))
+    ]);
   };
 }
 
@@ -369,13 +407,28 @@ searchField.createSearchFieldView();
 document.getElementById("content").appendChild(searchField.getSearchField());
 searchField.addNeededEvents(getHints(), getResults(apiKey), 4, 30);
 
-var grid = new Grid();
-grid.createGridView("GIFs");
-document.getElementById("content").appendChild(grid.getGrid());
+var gifsTab = new Tab("GIFs");
+gifsTab.createTabView();
+var stickersTab = new Tab("Stickers");
+stickersTab.createTabView();
+document.getElementById("content").appendChild(gifsTab.getTab());
+document.getElementById("content").appendChild(stickersTab.getTab());
+
+var gridGIFs = new Grid();
+gridGIFs.createGridView("GIFs");
+document.getElementById("content").appendChild(gridGIFs.getGrid());
 
 var gridStickers = new Grid();
 gridStickers.createGridView("Stickers");
 document.getElementById("content").appendChild(gridStickers.getGrid());
+
+var grids = [gridGIFs, gridStickers];
+
+var gifsTab = new Tab("GIFs");
+gifsTab.createTabView();
+
+var stickersTab = new Tab("Stickers");
+stickersTab.createTabView();
 
 window.onscroll = function(e) {
   console.log(searchField.letMakeRequest);
