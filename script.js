@@ -1,5 +1,7 @@
 // class SearchField
-function SearchField() {}
+function SearchField() {
+  this.letMakeRequest = true;
+}
 
 SearchField.prototype.createSearchFieldView = function() {
   var formTag = document.createElement("form");
@@ -78,27 +80,44 @@ SearchField.prototype.addNeededEvents = function(
     } else if (e.keyCode === 13 && result !== "") {
       // 13 == enter
       e.preventDefault();
+      that.letMakeRequest = false;
       if (getResults) {
-        var resultsPromise = getResults(result.trim(), maxNumResultsPerRequest);
+        console.log(e);
+        if (e.code !== "true") {
+          console.log("clearGrid");
+          grid.clearGrid();
+        }
 
-        resultsPromise.then(results => {
-          if (results) {
-            var gridGroup = new GridGroup();
-            gridGroup.createGridGroupView();
-            for (var i = 0; i < results["data"].length; i++) {
-              var gridCell = new GridCell(
-                results["data"][i]["images"]["downsized"]["width"],
-                results["data"][i]["images"]["downsized"]["height"]
-              );
-              gridCell.createGridCellView();
-              gridCell.addImage(
-                results["data"][i]["images"]["downsized"]["url"]
-              );
-              gridGroup.addCell(gridCell.getGridCell());
+        var resultsPromise = getResults(
+          result.trim(),
+          maxNumResultsPerRequest,
+          !e.code
+        );
+
+        resultsPromise
+          .then(results => {
+            if (results) {
+              var gridGroup = new GridGroup();
+              gridGroup.createGridGroupView();
+              for (var i = 0; i < results["data"].length; i++) {
+                var gridCell = new GridCell(
+                  results["data"][i]["images"]["downsized"]["width"],
+                  results["data"][i]["images"]["downsized"]["height"]
+                );
+                gridCell.createGridCellView();
+                gridCell.addImage(
+                  results["data"][i]["images"]["downsized"]["url"]
+                );
+                gridGroup.addCell(gridCell.getGridCell());
+              }
+              grid.addGridGroup(gridGroup.getGridGroup());
+              that.letMakeRequest = true;
             }
-            grid.addGridGroup(gridGroup.getGridGroup());
-          }
-        });
+          })
+          .catch(e => {
+            console.log("result promise error");
+            that.letMakeRequest = false;
+          });
       }
     } else if (e.keyCode === 8) {
       // 8 == backspace
@@ -151,9 +170,9 @@ SearchField.prototype.addChildElement = function(childElement) {
 // class Grid
 function Grid() {}
 
-Grid.prototype.createGridView = function() {
+Grid.prototype.createGridView = function(gridPurpose) {
   var div = document.createElement("div");
-  div.setAttribute("id", "grid");
+  div.setAttribute("id", `grid${gridPurpose}`);
   this.grid = div;
 };
 
@@ -175,7 +194,33 @@ Grid.prototype.clearGrid = function() {
   }
 };
 
+Grid.prototype.showGrid = function() {
+  this.grid.style.display = "block";
+};
+
+Grid.prototype.hideGrid = function() {
+  this.grid.style.display = "none";
+};
+
 // end class Grid
+
+// class Tab
+function Tab(label) {
+  this.label = label;
+}
+
+Tab.prototype.createTabView = function() {
+  var span = document.createElement("span");
+  span.setAttribute("class", "span");
+  span.innerText = this.lable;
+
+  this.tab = span;
+};
+
+Tab.prototype.getTab = function() {
+  return this.tab;
+};
+// end class Tab
 
 // class GridGroup
 function GridGroup() {}
@@ -193,7 +238,7 @@ GridGroup.prototype.addCell = function(cell) {
 GridGroup.prototype.getGridGroup = function() {
   return this.gridGroup;
 };
-// end GridGroup
+// end class GridGroup
 
 // class GridCell
 function GridCell(width, height) {
@@ -300,11 +345,13 @@ function getResults(apiKey) {
 
   return function(request, resultsPerRequest, resetBatchNumber) {
     var laying = "https://cors.io/?";
-    var results = encodeURI(
-      `http://api.giphy.com/v1/gifs/search?q=${request}g&api_key=${apiKey}&limit=${resultsPerRequest}&offset=${resultsPerRequest *
-        batchNumber}`
-    );
 
+    var results = encodeURI(
+      laying +
+        `http://api.giphy.com/v1/gifs/search?q=${request}&api_key=${apiKey}&limit=${resultsPerRequest}&offset=${resultsPerRequest *
+          batchNumber}`
+    );
+    console.log(results, "url of request");
     return fetch(results)
       .then(response => {
         batchNumber++;
@@ -315,7 +362,7 @@ function getResults(apiKey) {
   };
 }
 
-var apiKey = "XJbIRItZXyqpIrv53RgoAWQDHXFmlZBA";
+var apiKey = "XAz4Bn2YbnvfXDD7QfkP6yg5hhzYEIqv";
 
 var searchField = new SearchField();
 searchField.createSearchFieldView();
@@ -323,33 +370,28 @@ document.getElementById("content").appendChild(searchField.getSearchField());
 searchField.addNeededEvents(getHints(), getResults(apiKey), 4, 30);
 
 var grid = new Grid();
-grid.createGridView();
+grid.createGridView("GIFs");
 document.getElementById("content").appendChild(grid.getGrid());
 
-window.onscroll = function(ev) {
-  var letScroll = true;
+var gridStickers = new Grid();
+gridStickers.createGridView("Stickers");
+document.getElementById("content").appendChild(gridStickers.getGrid());
+
+window.onscroll = function(e) {
+  console.log(searchField.letMakeRequest);
   if (
     window.innerHeight + window.scrollY >= document.body.offsetHeight &&
-    letScroll
+    searchField.letMakeRequest
   ) {
     // you're at the bottom of the page
     const ke = new KeyboardEvent("keydown", {
       bubbles: true,
       cancelable: true,
-      keyCode: 13
+      keyCode: 13,
+      code: true
     });
     document.getElementById("searchField").dispatchEvent(ke);
   }
-
-  setTimeout(
-    (function() {
-      return function() {
-        letScroll = !letScroll;
-        console.log(letScroll, "letScroll");
-      };
-    })(),
-    300
-  );
 };
 
 // end class SearchField
