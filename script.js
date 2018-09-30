@@ -239,6 +239,7 @@ Tab.prototype.createTabView = function() {
 Tab.prototype.getTab = function() {
   return this.tab;
 };
+
 // end class Tab
 
 // class GridGroup
@@ -424,11 +425,29 @@ document.getElementById("content").appendChild(gridStickers.getGrid());
 
 var grids = [gridGIFs, gridStickers];
 
+grids[0].showGrid();
+grids[1].hideGrid();
+
 var gifsTab = new Tab("GIFs");
 gifsTab.createTabView();
 
 var stickersTab = new Tab("Stickers");
 stickersTab.createTabView();
+
+var tabs = document.getElementsByClassName("tab");
+tabs[0].addEventListener("click", function(e) {
+  console.log(e, "gifsTab click");
+  //e.stopPropagation();
+  grids[0].showGrid();
+  grids[1].hideGrid();
+});
+
+tabs[1].addEventListener("click", function(e) {
+  console.log(e, "stickersTab click");
+  //e.stopPropagation();
+  grids[0].hideGrid();
+  grids[1].showGrid();
+});
 
 window.onscroll = function(e) {
   console.log(searchField.letMakeRequest);
