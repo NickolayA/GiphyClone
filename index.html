@@ -8,18 +8,66 @@
 </head>
 
 <body>
+	<div id="content"></div>
+
 	<style type="text/css">
-		#grid {
+		#content {
 			margin: auto;
-			width: 70%;
+			width: 80%;
+			/* overflow-x: hidden; */
+			/* height: 100%; */
+			/* overflow-y: scroll; */
+			/* overflow-x: hidden; */
+			/* overflow-x: hidden;
+			overflow-y: visible; */
+		}
+
+		#searchField {
+			position: relative;
+			width: 100%;
+		}
+
+		#searchField input {
+			width: 100%;
+		}
+
+		#grid {}
+
+		#dropDownMenu {
+			position: absolute;
+			margin: 0px;
+			padding: 0px;
+			width: 100%;
+		}
+
+		.dropDownRow {
+			list-style-type: none;
+			background-color: grey;
+			padding: 10px;
+		}
+
+		.dropDownRow:hover {
+			background-color: white;
+		}
+
+		.gridGroup {
+			width: 100%;
 			line-height: 0;
 			column-count: 6;
 			column-gap: 0px;
+			column-fill: auto;
+			/* overflow-y: hidden; */
 		}
 
 		.gridCell {
 			width: 100% !important;
 			height: auto !important;
+		}
+
+
+		.gridCell:hover {
+			background-color: rgba(150, 150, 100, 0.2);
+
 		}
 	</style>
 	<script src="script.js"></script>
