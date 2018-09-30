@@ -111,7 +111,8 @@ SearchField.prototype.addNeededEvents = function(
                   );
                   gridCell.createGridCellView();
                   gridCell.addImage(
-                    result["data"][i]["images"]["downsized"]["url"]
+                    result["data"][i]["images"]["downsized"]["url"],
+                    imageClickHandler
                   );
                   gridGroup.addCell(gridCell.getGridCell());
                 }
@@ -278,9 +279,12 @@ GridCell.prototype.getGridCell = function() {
   return this.gridCell;
 };
 
-GridCell.prototype.addImage = function(url) {
+GridCell.prototype.addImage = function(url, eventHandler) {
   var img = document.createElement("img");
   img.setAttribute("src", url);
+  if (eventHandler) {
+    img.addEventListener("click", eventHandler);
+  }
   this.gridCell.appendChild(img);
 };
 // end class GridCell
@@ -410,10 +414,16 @@ searchField.addNeededEvents(getHints(), getResults(apiKey), 4, 30);
 
 var gifsTab = new Tab("GIFs");
 gifsTab.createTabView();
+
 var stickersTab = new Tab("Stickers");
 stickersTab.createTabView();
+
+var favoritesTab = new Tab("Favorites");
+favoritesTab.createTabView();
+
 document.getElementById("content").appendChild(gifsTab.getTab());
 document.getElementById("content").appendChild(stickersTab.getTab());
+document.getElementById("content").appendChild(favoritesTab.getTab());
 
 var gridGIFs = new Grid();
 gridGIFs.createGridView("GIFs");
@@ -423,23 +433,22 @@ var gridStickers = new Grid();
 gridStickers.createGridView("Stickers");
 document.getElementById("content").appendChild(gridStickers.getGrid());
 
-var grids = [gridGIFs, gridStickers];
+var gridFavorites = new Grid();
+gridFavorites.createGridView("Favorites");
+document.getElementById("content").appendChild(gridFavorites.getGrid());
+
+var grids = [gridGIFs, gridStickers, gridFavorites];
 
 grids[0].showGrid();
 grids[1].hideGrid();
-
-var gifsTab = new Tab("GIFs");
-gifsTab.createTabView();
-
-var stickersTab = new Tab("Stickers");
-stickersTab.createTabView();
+grids[2].hideGrid();
 
 var tabs = document.getElementsByClassName("tab");
 tabs[0].addEventListener("click", function(e) {
-  console.log(e, "gifsTab click");
   //e.stopPropagation();
   grids[0].showGrid();
   grids[1].hideGrid();
+  grids[2].hideGrid();
 });
 
 tabs[1].addEventListener("click", function(e) {
@@ -447,6 +456,31 @@ tabs[1].addEventListener("click", function(e) {
   //e.stopPropagation();
   grids[0].hideGrid();
   grids[1].showGrid();
+  grids[2].hideGrid();
+});
+
+tabs[2].addEventListener("click", function(e) {
+  console.log(e, "favorites click");
+  //e.stopPropagation();
+  grids[0].hideGrid();
+  grids[1].hideGrid();
+  grids[2].showGrid();
+  var transaction = db.transaction(["images"], "readonly");
+  var store = transaction.objectStore("images");
+  var cursor = store.openCursor();
+  cursor.onsuccess = function(e) {
+    var res = e.target.result;
+    if (res) {
+      console.log(res.value);
+      var gridCell = new GridCell(res.value.width, res.value.height);
+      gridCell.createGridCellView();
+      gridCell.addImage(res.value.src);
+      grids[2].addCell(gridCell.getGridCell());
+      res.continue();
+    }
+  };
+
+  //var gridCell = new GridCell();
 });
 
 window.onscroll = function(e) {
@@ -466,4 +500,45 @@ window.onscroll = function(e) {
   }
 };
 
-// end class SearchField
+// Indexed DB
+
+var db;
+if ("indexedDB" in window) {
+  console.log("Very good you can work with IndexedDB");
+  var iDB = window.indexedDB.open("images", 1);
+
+  iDB.onsuccess = function(e) {
+    db = e.target.result;
+  };
+
+  iDB.onerror = function(e) {};
+
+  iDB.onupgradeneeded = function(e) {
+    var thisDB = e.target.result;
+    if (!thisDB.objectStoreNames.contains("images")) {
+      thisDB.createObjectStore("images", { keyPath: "src" });
+    }
+  };
+} else {
+  console.log("I am so sorry!");
+}
+
+function imageClickHandler(e) {
+  console.log(e.srcElement.width, e.srcElement.height, e.srcElement.src, db);
+  var transaction = db.transaction(["images"], "readwrite");
+  var store = transaction.objectStore("images");
+  var image = {
+    width: e.srcElement.width,
+    height: e.srcElement.height,
+    src: e.srcElement.src
+  };
+  var request = store.add(image);
+  request.onsuccess = function(e) {
+    alert("The image was saved to favorites");
+  };
+
+  request.onerror = function(e) {
+    alert("The image is already in favorites");
+  };
+}
+// end indexed db
