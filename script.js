@@ -49,7 +49,9 @@ SearchField.prototype.addNeededEvents = function(
   this.searchField.firstChild.addEventListener("blur", function() {
     var dropDownMenu = document.getElementById("dropDownMenu");
     if (dropDownMenu) {
-      dropDownMenu.style.display = "none";
+      setTimeout(function() {
+        dropDownMenu.style.display = "none";
+      }, 1000);
     }
   });
 
@@ -71,8 +73,52 @@ SearchField.prototype.addNeededEvents = function(
           console.log(hints);
           if (hints) {
             var dropDownMenu = new DropDownMenu(hints["result"]["objects"], 3);
-            dropDownMenu.createDropDownView();
+
+            dropDownMenu.createDropDownView({
+              click: function(e) {
+                console.log(e.target.value);
+              }
+            });
             that.addChildElement(dropDownMenu.getDropDownMenu());
+
+            var rows = document.getElementsByClassName("dropDownRow");
+            for (var i = 0; i < rows.length; i++) {
+              rows[i].addEventListener(
+                "click",
+                function(e) {
+                  console.log("bubbling");
+                  result = e.target.innerText;
+                  const ke = new KeyboardEvent("keydown", {
+                    bubbles: true,
+                    cancelable: true,
+                    keyCode: 13,
+                    code: false
+                  });
+                  var searchField = document.getElementById("searchField");
+                  searchField.dispatchEvent(ke);
+                  searchField.firstChild.value = result;
+                  //e.target.parentElement.style.display = "none";
+                },
+                { capture: false }
+              );
+              rows[i].lastChild.addEventListener("click", function(e) {
+                e.stopPropagation();
+                document.getElementById("searchField").firstChild.focus();
+
+                var transaction = db.transaction(["tags"], "readwrite");
+                var store = transaction.objectStore("tags");
+                var request = store.add({
+                  tag: e.target.parentElement.innerText
+                });
+                request.onsuccess = function(e) {
+                  alert("Tag was saved");
+                };
+
+                request.onerror = function(e) {
+                  alert("Tag is already exists");
+                };
+              });
+            }
           }
         });
       }
@@ -151,11 +197,45 @@ SearchField.prototype.addNeededEvents = function(
                     3
                   );
                   dropDownMenu.createDropDownView();
-                  console.log(dropDownMenu.getDropDownMenu());
                   that
                     .getSearchField()
                     .appendChild(dropDownMenu.getDropDownMenu());
                   that.addChildElement(dropDownMenu.getDropDownMenu());
+
+                  var rows = document.getElementsByClassName("dropDownRow");
+                  for (var i = 0; i < rows.length; i++) {
+                    rows[i].addEventListener(
+                      "click",
+                      function(e) {
+                        result = e.target.innerText;
+
+                        var searchField = document.getElementById(
+                          "searchField"
+                        );
+                        searchField.dispatchEvent(ke);
+                        //searchField.innerText = result;
+                        searchField.firstChild.value = result;
+                        // e.target.parentElement.style.display = "none";
+                      },
+                      { capture: false }
+                    );
+                    rows[i].lastChild.addEventListener("click", function(e) {
+                      e.stopPropagation();
+                      document.getElementById("searchField").firstChild.focus();
+                      var transaction = db.transaction(["tags"], "readwrite");
+                      var store = transaction.objectStore("tags");
+                      var request = store.add({
+                        tag: e.target.parentElement.innerText
+                      });
+                      request.onsuccess = function(e) {
+                        alert("Tag was saved");
+                      };
+
+                      request.onerror = function(e) {
+                        alert("Tag is already exists");
+                      };
+                    });
+                  }
                 }
               })
               .catch(e => console.log(e));
@@ -237,6 +317,14 @@ Tab.prototype.createTabView = function() {
   this.tab = span;
 };
 
+Tab.prototype.showTab = function() {
+  this.tab.style.visibility = "visible";
+};
+
+Tab.prototype.hideTab = function() {
+  this.tab.style.visibility = "hidden";
+};
+
 Tab.prototype.getTab = function() {
   return this.tab;
 };
@@ -302,7 +390,7 @@ function DropDownMenu(data, maxNumOfRows) {
   // this.dropDownRows = [];
 }
 
-DropDownMenu.prototype.createDropDownView = function() {
+DropDownMenu.prototype.createDropDownView = function(events) {
   var ul = document.createElement("ul");
   ul.setAttribute("id", "dropDownMenu");
 
@@ -311,10 +399,28 @@ DropDownMenu.prototype.createDropDownView = function() {
 
   for (var i = 0; i < numOfRows; i++) {
     var dropDownRow = new DropDownRow(this.data[i].name);
-    dropDownRow.createDropDownRowView();
+    dropDownRow.createDropDownRowView({
+      click: function(e) {
+        console.log(e.target.value);
+      }
+    });
     ul.appendChild(dropDownRow.getDropDownRow());
   }
   this.dropDownMenu = ul;
+  if (document.getElementsByClassName("dropDownRow")) {
+    console.log(document.getElementsByClassName("dropDownRow"));
+    for (
+      var i = 0;
+      i < document.getElementsByClassName("dropDownRow").length;
+      i++
+    ) {
+      document
+        .getElementsByClassName("dropDownRow")
+        [i].addEventListener("hover", function(e) {
+          console.log(e.target.value);
+        });
+    }
+  }
 };
 
 DropDownMenu.prototype.getDropDownMenu = function() {
@@ -332,10 +438,19 @@ function DropDownRow(data) {
   this.data = data;
 }
 
-DropDownRow.prototype.createDropDownRowView = function() {
+DropDownRow.prototype.createDropDownRowView = function(events) {
+  /**
+   * @param {object} events Action -> Handler pairs to assign to dropDownRow
+   */
   var li = document.createElement("li");
+  var span = document.createElement("span");
+  span.setAttribute("class", "save");
+  span.setAttribute("title", "Click to save");
+  //span.innerText = "Save";
   li.innerText = this.data;
+  li.appendChild(span);
   li.setAttribute("class", "dropDownRow");
+
   this.dropDownRow = li;
 };
 
@@ -440,6 +555,7 @@ stickersTab.createTabView();
 
 var favoritesTab = new Tab("Favorites");
 favoritesTab.createTabView();
+favoritesTab.hideTab();
 
 document.getElementById("content").appendChild(gifsTab.getTab());
 document.getElementById("content").appendChild(stickersTab.getTab());
@@ -463,6 +579,7 @@ grids[0].showGrid();
 grids[1].hideGrid();
 grids[2].hideGrid();
 
+//@todo create a function to minimize amount of code
 var tabs = document.getElementsByClassName("tab");
 tabs[0].addEventListener("click", function(e) {
   tabs[0].classList.add("active");
@@ -539,10 +656,15 @@ window.onscroll = function(e) {
 var db;
 if ("indexedDB" in window) {
   console.log("Very good you can work with IndexedDB");
-  var iDB = window.indexedDB.open("images", 1);
+  var iDB = window.indexedDB.open("images", 2);
 
   iDB.onsuccess = function(e) {
     db = e.target.result;
+    var transaction = db.transaction(["images"], "readonly");
+    var store = transaction.objectStore("images");
+    store.count().onsuccess = function(e) {
+      if (e.target.result) favoritesTab.showTab();
+    };
   };
 
   iDB.onerror = function(e) {};
@@ -551,6 +673,10 @@ if ("indexedDB" in window) {
     var thisDB = e.target.result;
     if (!thisDB.objectStoreNames.contains("images")) {
       thisDB.createObjectStore("images", { keyPath: "src" });
+    }
+
+    if (!thisDB.objectStoreNames.contains("tags")) {
+      thisDB.createObjectStore("tags", { keyPath: "tag" });
     }
   };
 } else {

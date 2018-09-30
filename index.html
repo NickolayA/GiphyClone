@@ -26,6 +26,7 @@
 
 		#searchField input {
 			width: 100%;
+			height: 45px;
 		}
 
 		#grid {}
@@ -45,34 +46,53 @@
 
 		.dropDownRow:hover {
 			background-color: white;
+			cursor: pointer;
 		}
+
+		.dropDownRow span.save {
+			width: 10px;
+			height: 10px;
+			border: 1px solid red;
+			float: right;
+			border-radius: 100px;
+		}
+
+		.dropDownRow span.save:hover {
+			width: 10px;
+			height: 10px;
+			border: 1px solid chartreuse;
+			float: right;
+			border-radius: 100px;
+		}
+
 
 		.gridGroup {
 			width: 100%;
-			line-height: 0;
+			display: flex;
+			justify-content: center;
+			flex-wrap: wrap;
+			/* line-height: 0;
 			column-count: 6;
 			column-gap: 0px;
-			column-fill: auto;
-			/* overflow-y: hidden; */
+			column-fill: auto; */
 		}
 
 		.gridCell {
-			width: 100% !important;
-			height: auto !important;
+			/* width: 100% !important;
+			height: auto !important; */
 		}
 
-
-		.gridCell:hover {
-			background-color: rgba(150, 150, 100, 0.2);
-
+		.gridCell img {
+			cursor: pointer;
 		}
+
 
 		.tab {
 			margin-top: 10px;
 			margin-bottom: 20px;
 			width: 100px;
 			height: 10px;
-			background-color: cornflowerblue;
+			background-color: coral;
 			margin-right: 50px;
 			border-radius: 10px;
 			padding: 20px;
@@ -81,10 +101,17 @@
 			user-select: none;
 		}
 
+		.tab.active {
+			background-color: bisque;
+		}
+
 		.tab:hover {
 			background-color: antiquewhite;
 		}
 	</style>
+	<!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+	 crossorigin="anonymous"> -->
+
 	<script src="script.js"></script>
 </body>
 
