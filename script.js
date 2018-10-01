@@ -3,7 +3,7 @@ function SearchField() {
   this.letMakeRequest = true;
 }
 
-SearchField.prototype.createSearchFieldView = function() {
+SearchField.prototype.createSearchFieldView = function () {
   var formTag = document.createElement("form");
   formTag.setAttribute("id", "searchField");
   var inputTag = document.createElement("input");
@@ -13,7 +13,7 @@ SearchField.prototype.createSearchFieldView = function() {
 };
 
 // check if text in form is full selected
-SearchField.prototype.isTextSelected = function(input) {
+SearchField.prototype.isTextSelected = function (input) {
   if (typeof input.selectionStart == "number") {
     return (
       input.selectionStart == 0 && input.selectionEnd == input.value.length
@@ -24,7 +24,7 @@ SearchField.prototype.isTextSelected = function(input) {
   }
 };
 
-SearchField.prototype.addNeededEvents = function(
+SearchField.prototype.addNeededEvents = function (
   getHints,
   getResults,
   maxNumHintsRows,
@@ -42,7 +42,7 @@ SearchField.prototype.addNeededEvents = function(
 
   this.searchField.firstChild.addEventListener(
     "focus",
-    function() {
+    function () {
       clearTimeout(timeout);
       console.log("search field focus");
       var dropDownMenu = document.getElementById("dropDownMenu");
@@ -55,10 +55,10 @@ SearchField.prototype.addNeededEvents = function(
 
   this.searchField.firstChild.addEventListener(
     "blur",
-    function() {
+    function () {
       var dropDownMenu = document.getElementById("dropDownMenu");
       if (dropDownMenu) {
-        timeout = setTimeout(function() {
+        timeout = setTimeout(function () {
           dropDownMenu.style.display = "none";
         }, 450);
       }
@@ -66,7 +66,7 @@ SearchField.prototype.addNeededEvents = function(
     true
   );
 
-  this.searchField.addEventListener("keydown", function(e) {
+  this.searchField.addEventListener("keydown", function (e) {
     if (
       (e.keyCode >= 48 && e.keyCode <= 57) ||
       (e.keyCode >= 65 && e.keyCode <= 90) ||
@@ -94,7 +94,7 @@ SearchField.prototype.addNeededEvents = function(
 
             var rows = document.getElementsByClassName("dropDownRow");
             for (var i = 0; i < rows.length; i++) {
-              rows[i].addEventListener("click", function(e) {
+              rows[i].addEventListener("click", function (e) {
                 console.log("bubbling");
                 result = e.target.innerText;
                 const ke = new KeyboardEvent("keydown", {
@@ -133,18 +133,18 @@ SearchField.prototype.addNeededEvents = function(
           .then(results => {
             document.getElementById("Loading").style.display = "none";
             if (results) {
-              results.forEach(function(result, index) {
+              results.forEach(function (result, index) {
                 if (result["data"].length) {
                   var gridGroup = new GridGroup();
                   gridGroup.createGridGroupView();
                   for (var i = 0; i < result["data"].length; i++) {
                     var gridCell = new GridCell(
-                      result["data"][i]["images"]["fixed_width_small"]["width"],
-                      result["data"][i]["images"]["fixed_width_small"]["height"]
+                      result["data"][i]["images"]["fixed_height_downsampled"]["width"],
+                      result["data"][i]["images"]["fixed_height_downsampled"]["height"]
                     );
                     gridCell.createGridCellView();
                     gridCell.addImage(
-                      result["data"][i]["images"]["fixed_width_small"]["url"],
+                      result["data"][i]["images"]["fixed_height_downsampled"]["url"],
                       imageClickHandler
                     );
                     gridGroup.addCell(gridCell.getGridCell());
@@ -192,7 +192,7 @@ SearchField.prototype.addNeededEvents = function(
 
                   var rows = document.getElementsByClassName("dropDownRow");
                   for (var i = 0; i < rows.length; i++) {
-                    rows[i].addEventListener("click", function(e) {
+                    rows[i].addEventListener("click", function (e) {
                       result = e.target.innerText;
                       const ke = new KeyboardEvent("keydown", {
                         bubbles: true,
@@ -227,11 +227,11 @@ SearchField.prototype.addNeededEvents = function(
   });
 };
 
-SearchField.prototype.getSearchField = function() {
+SearchField.prototype.getSearchField = function () {
   return this.searchField;
 };
 
-SearchField.prototype.addChildElement = function(childElement) {
+SearchField.prototype.addChildElement = function (childElement) {
   if (document.getElementById("dropDownMenu")) {
     this.searchField.removeChild(document.getElementById("dropDownMenu"));
   }
@@ -242,35 +242,35 @@ SearchField.prototype.addChildElement = function(childElement) {
 // class Grid
 function Grid() {}
 
-Grid.prototype.createGridView = function(gridPurpose) {
+Grid.prototype.createGridView = function (gridPurpose) {
   var div = document.createElement("div");
   div.setAttribute("id", `grid${gridPurpose}`);
   this.grid = div;
 };
 
-Grid.prototype.getGrid = function() {
+Grid.prototype.getGrid = function () {
   return this.grid;
 };
 
-Grid.prototype.addGridGroup = function(gridGroup) {
+Grid.prototype.addGridGroup = function (gridGroup) {
   this.grid.appendChild(gridGroup);
 };
 
-Grid.prototype.addCell = function(cell) {
+Grid.prototype.addCell = function (cell) {
   this.grid.appendChild(cell);
 };
 
-Grid.prototype.clearGrid = function() {
+Grid.prototype.clearGrid = function () {
   while (this.grid.firstChild) {
     this.grid.removeChild(this.grid.firstChild);
   }
 };
 
-Grid.prototype.showGrid = function() {
+Grid.prototype.showGrid = function () {
   this.grid.style.display = "block";
 };
 
-Grid.prototype.hideGrid = function() {
+Grid.prototype.hideGrid = function () {
   this.grid.style.display = "none";
 };
 
@@ -281,7 +281,7 @@ function Tab(label) {
   this.label = label;
 }
 
-Tab.prototype.createTabView = function() {
+Tab.prototype.createTabView = function () {
   var span = document.createElement("span");
   span.setAttribute("class", "tab");
   span.innerText = this.label;
@@ -289,15 +289,15 @@ Tab.prototype.createTabView = function() {
   this.tab = span;
 };
 
-Tab.prototype.showTab = function() {
+Tab.prototype.showTab = function () {
   this.tab.style.visibility = "visible";
 };
 
-Tab.prototype.hideTab = function() {
+Tab.prototype.hideTab = function () {
   this.tab.style.visibility = "hidden";
 };
 
-Tab.prototype.getTab = function() {
+Tab.prototype.getTab = function () {
   return this.tab;
 };
 
@@ -306,17 +306,17 @@ Tab.prototype.getTab = function() {
 // class GridGroup
 function GridGroup() {}
 
-GridGroup.prototype.createGridGroupView = function() {
+GridGroup.prototype.createGridGroupView = function () {
   var div = document.createElement("div");
   div.setAttribute("class", "gridGroup");
   this.gridGroup = div;
 };
 
-GridGroup.prototype.addCell = function(cell) {
+GridGroup.prototype.addCell = function (cell) {
   this.gridGroup.appendChild(cell);
 };
 
-GridGroup.prototype.getGridGroup = function() {
+GridGroup.prototype.getGridGroup = function () {
   return this.gridGroup;
 };
 // end class GridGroup
@@ -327,7 +327,7 @@ function GridCell(width, height) {
   this.height = height;
 }
 
-GridCell.prototype.createGridCellView = function() {
+GridCell.prototype.createGridCellView = function () {
   var div = document.createElement("div");
   div.setAttribute("class", "gridCell");
   div.style.width = this.width;
@@ -335,11 +335,11 @@ GridCell.prototype.createGridCellView = function() {
   this.gridCell = div;
 };
 
-GridCell.prototype.getGridCell = function() {
+GridCell.prototype.getGridCell = function () {
   return this.gridCell;
 };
 
-GridCell.prototype.addImage = function(url, eventHandler) {
+GridCell.prototype.addImage = function (url, eventHandler) {
   var img = document.createElement("img");
   img.setAttribute("src", url);
   img.setAttribute("title", "Click to save!");
@@ -362,7 +362,7 @@ function DropDownMenu(data, maxNumOfRows) {
   // this.dropDownRows = [];
 }
 
-DropDownMenu.prototype.createDropDownView = function(events) {
+DropDownMenu.prototype.createDropDownView = function (events) {
   var ul = document.createElement("ul");
   ul.setAttribute("id", "dropDownMenu");
 
@@ -372,7 +372,7 @@ DropDownMenu.prototype.createDropDownView = function(events) {
   for (var i = 0; i < numOfRows; i++) {
     var dropDownRow = new DropDownRow(this.data[i].name);
     dropDownRow.createDropDownRowView({
-      click: function(e) {
+      click: function (e) {
         console.log(e.target.value);
       }
     });
@@ -381,20 +381,17 @@ DropDownMenu.prototype.createDropDownView = function(events) {
   this.dropDownMenu = ul;
   if (document.getElementsByClassName("dropDownRow")) {
     for (
-      var i = 0;
-      i < document.getElementsByClassName("dropDownRow").length;
-      i++
+      var i = 0; i < document.getElementsByClassName("dropDownRow").length; i++
     ) {
       document
-        .getElementsByClassName("dropDownRow")
-        [i].addEventListener("hover", function(e) {
+        .getElementsByClassName("dropDownRow")[i].addEventListener("hover", function (e) {
           console.log(e.target.value);
         });
     }
   }
 };
 
-DropDownMenu.prototype.getDropDownMenu = function() {
+DropDownMenu.prototype.getDropDownMenu = function () {
   return this.dropDownMenu;
 };
 
@@ -409,7 +406,7 @@ function DropDownRow(data) {
   this.data = data;
 }
 
-DropDownRow.prototype.createDropDownRowView = function(events) {
+DropDownRow.prototype.createDropDownRowView = function (events) {
   /**
    * @param {object} events Action -> Handler pairs to assign to dropDownRow
    */
@@ -425,7 +422,7 @@ DropDownRow.prototype.createDropDownRowView = function(events) {
   this.dropDownRow = li;
 };
 
-DropDownRow.prototype.getDropDownRow = function() {
+DropDownRow.prototype.getDropDownRow = function () {
   return this.dropDownRow;
 };
 // end class DropDownRow
@@ -435,7 +432,7 @@ function getHints() {
    *
    *
    */
-  return function(request) {
+  return function (request) {
     var laying = "https://cors.io/?";
     var hints = encodeURI(
       laying + `https://giphy.com/ajax/tags/search/?q=${request}`
@@ -455,18 +452,18 @@ function getResults(apiKey) {
   var batchNumberGIFs = 0,
     batchNumberStickers = 0;
 
-  return function(request, resultsPerRequest, resetBatchNumber) {
+  return function (request, resultsPerRequest, resetBatchNumber) {
     var laying = "https://cors.io/?";
 
     var resultsGIFs = encodeURI(
       laying +
-        `http://api.giphy.com/v1/gifs/search?q=${request}&api_key=${apiKey}&limit=${resultsPerRequest}&offset=${resultsPerRequest *
+      `http://api.giphy.com/v1/gifs/search?q=${request}&api_key=${apiKey}&limit=${resultsPerRequest}&offset=${resultsPerRequest *
           batchNumberGIFs}`
     );
 
     var resultsStickers = encodeURI(
       laying +
-        `http://api.giphy.com/v1/stickers/search?q=${request}&api_key=${apiKey}&limit=${resultsPerRequest}&offset=${resultsPerRequest *
+      `http://api.giphy.com/v1/stickers/search?q=${request}&api_key=${apiKey}&limit=${resultsPerRequest}&offset=${resultsPerRequest *
           batchNumberStickers}`
     );
 
@@ -475,21 +472,21 @@ function getResults(apiKey) {
 
     return Promise.all([
       fetch(resultsGIFs)
-        .then(response => {
-          document.getElementById("Loading").style.display = "block";
-          batchNumberGIFs++;
-          if (resetBatchNumber) batchNumberGIFs = 0;
-          return response.json();
-        })
-        .catch(e => console.log(e)),
+      .then(response => {
+        document.getElementById("Loading").style.display = "block";
+        batchNumberGIFs++;
+        if (resetBatchNumber) batchNumberGIFs = 0;
+        return response.json();
+      })
+      .catch(e => console.log(e)),
       fetch(resultsStickers)
-        .then(response => {
-          document.getElementById("Loading").style.display = "block";
-          batchNumberStickers++;
-          if (resetBatchNumber) batchNumberStickers = 0;
-          return response.json();
-        })
-        .catch(e => console.log(e))
+      .then(response => {
+        document.getElementById("Loading").style.display = "block";
+        batchNumberStickers++;
+        if (resetBatchNumber) batchNumberStickers = 0;
+        return response.json();
+      })
+      .catch(e => console.log(e))
     ]);
   };
 }
@@ -504,12 +501,12 @@ function imageClickHandler(e) {
     src: e.srcElement.src
   };
   var request = store.add(image);
-  request.onsuccess = function(e) {
+  request.onsuccess = function (e) {
     alert("The image was saved to favorites");
     favoritesTab.showTab();
   };
 
-  request.onerror = function(e) {
+  request.onerror = function (e) {
     alert("The image is already in favorites");
   };
 }
@@ -523,21 +520,31 @@ function saveTagHandler(e) {
   var request = store.add({
     tag: e.target.parentElement.innerText
   });
-  request.onsuccess = function(e) {
+  request.onsuccess = function (e) {
     alert("Tag was saved");
   };
 
-  request.onerror = function(e) {
+  request.onerror = function (e) {
     alert("Tag is already exists");
   };
 }
 
+
+/**
+ * API KEY!!!!!!!!!!!!!!!!!!
+ */
 var apiKey = "X7nYSP1CQqop8BDQiK89K3ZEk0oj7Vvj";
+/**
+ * API KEY!!!!!!!!!!!!!!!!!!
+ */
+
+
+
 
 var searchField = new SearchField();
 searchField.createSearchFieldView();
 document.getElementById("content").appendChild(searchField.getSearchField());
-searchField.addNeededEvents(getHints(), getResults(apiKey), 4, 40);
+searchField.addNeededEvents(getHints(), getResults(apiKey), 4, 30);
 
 var gifsTab = new Tab("GIFs");
 gifsTab.createTabView();
@@ -573,7 +580,7 @@ grids[2].hideGrid();
 
 //@todo create a function to minimize amount of code
 var tabs = document.getElementsByClassName("tab");
-tabs[0].addEventListener("click", function(e) {
+tabs[0].addEventListener("click", function (e) {
   tabs[0].classList.add("active");
   tabs[1].classList.remove("active");
   tabs[2].classList.remove("active");
@@ -583,7 +590,7 @@ tabs[0].addEventListener("click", function(e) {
   grids[2].hideGrid();
 });
 
-tabs[1].addEventListener("click", function(e) {
+tabs[1].addEventListener("click", function (e) {
   tabs[0].classList.remove("active");
   tabs[1].classList.add("active");
   tabs[2].classList.remove("active");
@@ -593,7 +600,7 @@ tabs[1].addEventListener("click", function(e) {
   grids[2].hideGrid();
 });
 
-tabs[2].addEventListener("click", function(e) {
+tabs[2].addEventListener("click", function (e) {
   tabs[0].classList.remove("active");
   tabs[1].classList.remove("active");
   tabs[2].classList.add("active");
@@ -611,7 +618,7 @@ tabs[2].addEventListener("click", function(e) {
   var gridGroup = new GridGroup();
   gridGroup.createGridGroupView();
 
-  cursor.onsuccess = function(e) {
+  cursor.onsuccess = function (e) {
     var res = e.target.result;
     if (res) {
       var gridCell = new GridCell(res.value.width, res.value.height);
@@ -626,7 +633,7 @@ tabs[2].addEventListener("click", function(e) {
   };
 });
 
-window.onscroll = function(e) {
+window.onscroll = function (e) {
   console.log(searchField.letMakeRequest);
   if (
     window.innerHeight + window.scrollY >= document.body.offsetHeight &&
@@ -656,25 +663,29 @@ if ("indexedDB" in window) {
   console.log("Very good you can work with IndexedDB");
   var iDB = window.indexedDB.open("images", 2);
 
-  iDB.onsuccess = function(e) {
+  iDB.onsuccess = function (e) {
     db = e.target.result;
     var transaction = db.transaction(["images"], "readonly");
     var store = transaction.objectStore("images");
-    store.count().onsuccess = function(e) {
+    store.count().onsuccess = function (e) {
       if (e.target.result) favoritesTab.showTab();
     };
   };
 
-  iDB.onerror = function(e) {};
+  iDB.onerror = function (e) {};
 
-  iDB.onupgradeneeded = function(e) {
+  iDB.onupgradeneeded = function (e) {
     var thisDB = e.target.result;
     if (!thisDB.objectStoreNames.contains("images")) {
-      thisDB.createObjectStore("images", { keyPath: "src" });
+      thisDB.createObjectStore("images", {
+        keyPath: "src"
+      });
     }
 
     if (!thisDB.objectStoreNames.contains("tags")) {
-      thisDB.createObjectStore("tags", { keyPath: "tag" });
+      thisDB.createObjectStore("tags", {
+        keyPath: "tag"
+      });
     }
   };
 } else {
