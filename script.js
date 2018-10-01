@@ -119,9 +119,7 @@ SearchField.prototype.addNeededEvents = function(
       e.preventDefault();
       that.letMakeRequest = false;
       if (getResults) {
-        console.log(e);
         if (e.code !== "true") {
-          console.log("clearGrid");
           grids.forEach(grid => grid.clearGrid());
         }
 
@@ -130,8 +128,6 @@ SearchField.prototype.addNeededEvents = function(
           maxNumResultsPerRequest,
           !e.code
         );
-
-        console.log(resultsPromise);
 
         resultsPromise
           .then(results => {
@@ -162,7 +158,7 @@ SearchField.prototype.addNeededEvents = function(
           })
           .catch(e => {
             console.log("result promise error", e);
-            that.letMakeRequest = false;
+            that.letMakeRequest = true;
           });
       }
     } else if (e.keyCode === 8) {
@@ -384,7 +380,6 @@ DropDownMenu.prototype.createDropDownView = function(events) {
   }
   this.dropDownMenu = ul;
   if (document.getElementsByClassName("dropDownRow")) {
-    console.log(document.getElementsByClassName("dropDownRow"));
     for (
       var i = 0;
       i < document.getElementsByClassName("dropDownRow").length;
@@ -537,7 +532,7 @@ function saveTagHandler(e) {
   };
 }
 
-var apiKey = "uLiva8YJhn3TXxm6aNRAhpdcMMj4JhNL";
+var apiKey = "X7nYSP1CQqop8BDQiK89K3ZEk0oj7Vvj";
 
 var searchField = new SearchField();
 searchField.createSearchFieldView();
