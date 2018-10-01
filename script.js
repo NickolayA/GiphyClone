@@ -38,22 +38,33 @@ SearchField.prototype.addNeededEvents = function(
    */
   var result = "";
   var that = this; // change to arrow function
+  var timeout;
 
-  this.searchField.firstChild.addEventListener("focus", function() {
-    var dropDownMenu = document.getElementById("dropDownMenu");
-    if (dropDownMenu) {
-      dropDownMenu.style.display = "block";
-    }
-  });
+  this.searchField.firstChild.addEventListener(
+    "focus",
+    function() {
+      clearTimeout(timeout);
+      console.log("search field focus");
+      var dropDownMenu = document.getElementById("dropDownMenu");
+      if (dropDownMenu) {
+        dropDownMenu.style.display = "block";
+      }
+    },
+    true
+  );
 
-  this.searchField.firstChild.addEventListener("blur", function() {
-    var dropDownMenu = document.getElementById("dropDownMenu");
-    if (dropDownMenu) {
-      setTimeout(function() {
-        dropDownMenu.style.display = "none";
-      }, 1000);
-    }
-  });
+  this.searchField.firstChild.addEventListener(
+    "blur",
+    function() {
+      var dropDownMenu = document.getElementById("dropDownMenu");
+      if (dropDownMenu) {
+        timeout = setTimeout(function() {
+          dropDownMenu.style.display = "none";
+        }, 450);
+      }
+    },
+    true
+  );
 
   this.searchField.addEventListener("keydown", function(e) {
     if (
@@ -71,53 +82,33 @@ SearchField.prototype.addNeededEvents = function(
 
         hintsPromise.then(hints => {
           console.log(hints);
-          if (hints) {
-            var dropDownMenu = new DropDownMenu(hints["result"]["objects"], 3);
 
-            dropDownMenu.createDropDownView({
-              click: function(e) {
-                console.log(e.target.value);
-              }
-            });
+          if (hints) {
+            var dropDownMenu = new DropDownMenu(
+              hints["result"]["objects"],
+              maxNumHintsRows
+            );
+
+            dropDownMenu.createDropDownView();
             that.addChildElement(dropDownMenu.getDropDownMenu());
 
             var rows = document.getElementsByClassName("dropDownRow");
             for (var i = 0; i < rows.length; i++) {
-              rows[i].addEventListener(
-                "click",
-                function(e) {
-                  console.log("bubbling");
-                  result = e.target.innerText;
-                  const ke = new KeyboardEvent("keydown", {
-                    bubbles: true,
-                    cancelable: true,
-                    keyCode: 13,
-                    code: false
-                  });
-                  var searchField = document.getElementById("searchField");
-                  searchField.dispatchEvent(ke);
-                  searchField.firstChild.value = result;
-                  //e.target.parentElement.style.display = "none";
-                },
-                { capture: false }
-              );
-              rows[i].lastChild.addEventListener("click", function(e) {
-                e.stopPropagation();
-                document.getElementById("searchField").firstChild.focus();
-
-                var transaction = db.transaction(["tags"], "readwrite");
-                var store = transaction.objectStore("tags");
-                var request = store.add({
-                  tag: e.target.parentElement.innerText
+              rows[i].addEventListener("click", function(e) {
+                console.log("bubbling");
+                result = e.target.innerText;
+                const ke = new KeyboardEvent("keydown", {
+                  bubbles: false,
+                  cancelable: true,
+                  keyCode: 13,
+                  code: false
                 });
-                request.onsuccess = function(e) {
-                  alert("Tag was saved");
-                };
-
-                request.onerror = function(e) {
-                  alert("Tag is already exists");
-                };
+                var searchField = document.getElementById("searchField");
+                searchField.dispatchEvent(ke);
+                searchField.firstChild.value = result;
+                //e.target.parentElement.style.display = "none";
               });
+              rows[i].lastChild.addEventListener("click", saveTagHandler);
             }
           }
         });
@@ -144,32 +135,33 @@ SearchField.prototype.addNeededEvents = function(
 
         resultsPromise
           .then(results => {
-            console.log(results);
-
+            document.getElementById("Loading").style.display = "none";
             if (results) {
               results.forEach(function(result, index) {
-                var gridGroup = new GridGroup();
-                gridGroup.createGridGroupView();
-                for (var i = 0; i < result["data"].length; i++) {
-                  var gridCell = new GridCell(
-                    result["data"][i]["images"]["downsized"]["width"],
-                    result["data"][i]["images"]["downsized"]["height"]
-                  );
-                  gridCell.createGridCellView();
-                  gridCell.addImage(
-                    result["data"][i]["images"]["downsized"]["url"],
-                    imageClickHandler
-                  );
-                  gridGroup.addCell(gridCell.getGridCell());
+                if (result["data"].length) {
+                  var gridGroup = new GridGroup();
+                  gridGroup.createGridGroupView();
+                  for (var i = 0; i < result["data"].length; i++) {
+                    var gridCell = new GridCell(
+                      result["data"][i]["images"]["fixed_width_small"]["width"],
+                      result["data"][i]["images"]["fixed_width_small"]["height"]
+                    );
+                    gridCell.createGridCellView();
+                    gridCell.addImage(
+                      result["data"][i]["images"]["fixed_width_small"]["url"],
+                      imageClickHandler
+                    );
+                    gridGroup.addCell(gridCell.getGridCell());
+                  }
+                  grids[index].addGridGroup(gridGroup.getGridGroup());
                 }
-                grids[index].addGridGroup(gridGroup.getGridGroup());
               });
             }
 
             that.letMakeRequest = true;
           })
           .catch(e => {
-            console.log("result promise error");
+            console.log("result promise error", e);
             that.letMakeRequest = false;
           });
       }
@@ -204,37 +196,21 @@ SearchField.prototype.addNeededEvents = function(
 
                   var rows = document.getElementsByClassName("dropDownRow");
                   for (var i = 0; i < rows.length; i++) {
-                    rows[i].addEventListener(
-                      "click",
-                      function(e) {
-                        result = e.target.innerText;
-
-                        var searchField = document.getElementById(
-                          "searchField"
-                        );
-                        searchField.dispatchEvent(ke);
-                        //searchField.innerText = result;
-                        searchField.firstChild.value = result;
-                        // e.target.parentElement.style.display = "none";
-                      },
-                      { capture: false }
-                    );
-                    rows[i].lastChild.addEventListener("click", function(e) {
-                      e.stopPropagation();
-                      document.getElementById("searchField").firstChild.focus();
-                      var transaction = db.transaction(["tags"], "readwrite");
-                      var store = transaction.objectStore("tags");
-                      var request = store.add({
-                        tag: e.target.parentElement.innerText
+                    rows[i].addEventListener("click", function(e) {
+                      result = e.target.innerText;
+                      const ke = new KeyboardEvent("keydown", {
+                        bubbles: true,
+                        cancelable: true,
+                        keyCode: 13,
+                        code: false
                       });
-                      request.onsuccess = function(e) {
-                        alert("Tag was saved");
-                      };
-
-                      request.onerror = function(e) {
-                        alert("Tag is already exists");
-                      };
+                      var searchField = document.getElementById("searchField");
+                      searchField.dispatchEvent(ke);
+                      //searchField.innerText = result;
+                      searchField.firstChild.value = result;
+                      // e.target.parentElement.style.display = "none";
                     });
+                    rows[i].lastChild.addEventListener("click", saveTagHandler);
                   }
                 }
               })
@@ -505,6 +481,7 @@ function getResults(apiKey) {
     return Promise.all([
       fetch(resultsGIFs)
         .then(response => {
+          document.getElementById("Loading").style.display = "block";
           batchNumberGIFs++;
           if (resetBatchNumber) batchNumberGIFs = 0;
           return response.json();
@@ -512,6 +489,7 @@ function getResults(apiKey) {
         .catch(e => console.log(e)),
       fetch(resultsStickers)
         .then(response => {
+          document.getElementById("Loading").style.display = "block";
           batchNumberStickers++;
           if (resetBatchNumber) batchNumberStickers = 0;
           return response.json();
@@ -540,12 +518,30 @@ function imageClickHandler(e) {
   };
 }
 
-var apiKey = "XAz4Bn2YbnvfXDD7QfkP6yg5hhzYEIqv";
+function saveTagHandler(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  document.getElementById("searchField").firstChild.focus();
+  var transaction = db.transaction(["tags"], "readwrite");
+  var store = transaction.objectStore("tags");
+  var request = store.add({
+    tag: e.target.parentElement.innerText
+  });
+  request.onsuccess = function(e) {
+    alert("Tag was saved");
+  };
+
+  request.onerror = function(e) {
+    alert("Tag is already exists");
+  };
+}
+
+var apiKey = "uLiva8YJhn3TXxm6aNRAhpdcMMj4JhNL";
 
 var searchField = new SearchField();
 searchField.createSearchFieldView();
 document.getElementById("content").appendChild(searchField.getSearchField());
-searchField.addNeededEvents(getHints(), getResults(apiKey), 4, 30);
+searchField.addNeededEvents(getHints(), getResults(apiKey), 4, 40);
 
 var gifsTab = new Tab("GIFs");
 gifsTab.createTabView();
@@ -650,6 +646,12 @@ window.onscroll = function(e) {
     document.getElementById("searchField").dispatchEvent(ke);
   }
 };
+
+var loading = document.createElement("div");
+loading.innerText = "Loading";
+loading.setAttribute("id", "Loading");
+document.body.appendChild(loading);
+loading.style.display = "none";
 
 // Indexed DB
 
