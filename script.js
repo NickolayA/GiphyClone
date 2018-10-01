@@ -511,6 +511,7 @@ function imageClickHandler(e) {
   var request = store.add(image);
   request.onsuccess = function(e) {
     alert("The image was saved to favorites");
+    favoritesTab.showTab();
   };
 
   request.onerror = function(e) {
